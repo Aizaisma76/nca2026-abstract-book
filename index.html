@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCA 2026 Abstract Book</title>
+<style>
+* {box-sizing:border-box}
+body {
+  margin:0;
+  background:#10264b;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
+}
+header {padding:18px 10px}
+h2 {margin:4px 0}
+.viewer {
+  min-height:65vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+  perspective:1200px;
+}
+canvas {
+  display:block;
+  max-width:95vw;
+  max-height:70vh;
+  width:auto;
+  height:auto;
+  background:white;
+  box-shadow:0 8px 28px #0009;
+  transition:transform .25s,opacity .25s;
+}
+.turn {transform:rotateY(-20deg);opacity:.5}
+button,a {
+  background:#f2d17c;
+  color:#10264b;
+  border:0;
+  border-radius:7px;
+  padding:12px 16px;
+  margin:5px;
+  font-weight:bold;
+  cursor:pointer;
+}
+a {display:inline-block;text-decoration:none}
+#counter {display:inline-block;min-width:80px}
+</style>
+</head>
+<body>
+<header>
+<h2>NATIONAL CONFERENCE ON AGEING 2026</h2>
+<p>ABSTRACT BOOK | 19–21 OCTOBER 2026</p>
+</header>
+
+<div class="viewer">
+<canvas id="page"></canvas>
+</div>
+
+<div>
+<button onclick="changePage(-1)">&#10094; Previous</button>
+<span id="counter">Loading...</span>
+<button onclick="changePage(1)">Next &#10095;</button>
+</div>
+
+<p>
+<a href="ABSTRACT%20BOOK%20B.pdf" download>
+Download PDF
+</a>
+</p>
+
+<script type="module">
+import * as pdfjsLib from
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+let pdf, current=1, busy=false;
+const canvas=document.getElementById("page");
+const ctx=canvas.getContext("2d");
+
+async function render(){
+  if(!pdf)return;
+  busy=true;
+  const page=await pdf.getPage(current);
+  const viewport=page.getViewport({scale:1.6});
+  canvas.width=viewport.width;
+  canvas.height=viewport.height;
+  await page.render({
+    canvasContext:ctx,viewport:viewport
+  }).promise;
+  document.getElementById("counter").textContent=
+    current+" / "+pdf.numPages;
+  canvas.classList.remove("turn");
+  busy=false;
+}
+
+window.changePage=async function(step){
+  if(busy||!pdf)return;
+  const next=current+step;
+  if(next<1||next>pdf.numPages)return;
+  canvas.classList.add("turn");
+  await new Promise(r=>setTimeout(r,250));
+  current=next;
+  await render();
+};
+
+try{
+  pdf=await pdfjsLib.getDocument(
+    "ABSTRACT%20BOOK%20B.pdf"
+  ).promise;
+  await render();
+}catch(e){
+  document.getElementById("counter").textContent=
+    "PDF could not be loaded";
+  console.error(e);
+}
+</script>
+</body>
+</html>
+  
